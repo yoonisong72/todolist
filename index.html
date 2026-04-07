@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Todo - 멋진 리액트 투두 리스트</title>
+    <!-- Google Fonts: Outfit -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- React & Babel CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        :root {
+            --primary: #8a2be2;
+            --secondary: #00d2ff;
+            --accent: #ff007c;
+            --bg-dark: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated Mesh Gradient Background */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(138, 43, 226, 0.4) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(0, 210, 255, 0.4) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(255, 0, 124, 0.2) 0%, transparent 50%);
+            filter: blur(80px);
+            animation: moveGradient 20s infinite alternate ease-in-out;
+        }
+
+        @keyframes moveGradient {
+            0% { transform: scale(1) translate(0, 0); }
+            50% { transform: scale(1.2) translate(5%, 5%); }
+            100% { transform: scale(1) translate(-5%, -5%); }
+        }
+
+        /* Glassmorphism Card */
+        .container {
+            width: 100%;
+            max-width: 480px;
+            padding: 2rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            margin: 1rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-weight: 800;
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            background: linear-gradient(135deg, var(--secondary), var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        /* Input Section */
+        .input-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 0.875rem 1rem;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 4px rgba(0, 210, 255, 0.15);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .add-btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 12px;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 12px rgba(138, 43, 226, 0.3);
+        }
+
+        .add-btn:hover {
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 8px 24px rgba(0, 210, 255, 0.4);
+        }
+
+        .add-btn svg { width: 20px; height: 20px; stroke-width: 2.5; }
+
+        /* Todo List Section */
+        .todo-list {
+            list-style: none;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .todo-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .todo-list::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 10px;
+        }
+
+        .todo-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); filter: blur(4px); }
+            to { opacity: 1; transform: translateX(0); filter: blur(0); }
+        }
+
+        .todo-item:hover {
+            background: rgba(255, 255, 255, 0.07);
+            transform: translateY(-2px);
+            border-color: var(--glass-border-hover);
+        }
+
+        .todo-text {
+            font-size: 1rem;
+            font-weight: 400;
+            color: var(--text-main);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 80%;
+        }
+
+        .delete-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-btn:hover {
+            color: var(--accent);
+            background: rgba(255, 0, 124, 0.1);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            padding: 2rem 0;
+            opacity: 0.6;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .container { padding: 1.5rem; }
+            h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function App() {
+            const [todos, setTodos] = useState(() => {
+                // 로컬 스토리지에서 초기 데이터 불러오기
+                const saved = localStorage.getItem('premium-todos');
+                return saved ? JSON.parse(saved) : [];
+            });
+            const [inputValue, setInputValue] = useState('');
+
+            // 데이터 변경 시 로컬 스토리지 업데이트
+            useEffect(() => {
+                localStorage.setItem('premium-todos', JSON.stringify(todos));
+            }, [todos]);
+
+            const addTodo = (e) => {
+                e.preventDefault();
+                if (!inputValue.trim()) return;
+
+                const newTodo = {
+                    id: Date.now(),
+                    text: inputValue.trim(),
+                    completed: false
+                };
+
+                setTodos([newTodo, ...todos]);
+                setInputValue('');
+            };
+
+            const deleteTodo = (id) => {
+                // 삭제 시 부드러운 효과를 위해 필터링
+                setTodos(todos.filter(todo => todo.id !== id));
+            };
+
+            return (
+                <div className="container">
+                    <h1>Todo List</h1>
+                    
+                    <form className="input-group" onSubmit={addTodo}>
+                        <input 
+                            type="text" 
+                            placeholder="할 일을 입력하세요..." 
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            autoFocus
+                        />
+                        <button type="submit" className="add-btn" aria-label="추가">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                        </button>
+                    </form>
+
+                    <ul className="todo-list">
+                        {todos.length > 0 ? (
+                            todos.map((todo) => (
+                                <li key={todo.id} className="todo-item">
+                                    <span className="todo-text">{todo.text}</span>
+                                    <button 
+                                        onClick={() => deleteTodo(todo.id)} 
+                                        className="delete-btn"
+                                        aria-label="삭제"
+                                    >
+                                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </li>
+                            ))
+                        ) : (
+                            <div className="empty-state">
+                                아직 할 일이 없습니다. 새로운 할 일을 추가해보세요!
+                            </div>
+                        )}
+                    </ul>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
